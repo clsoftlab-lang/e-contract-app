@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<!--
+  SPDX-License-Identifier: Apache-2.0
+  Copyright 2026 CLSOFTLAB (씨엘소프트랩), Dr. Lee Il-guk (이일국)
+-->
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>한국전자계약 · e-Contract</title>
+  <meta name="description" content="템플릿에서 계약서를 만들고, 캔버스 서명으로 날인하고, SHA-256 문서 해시로 무결성을 확인하는 데모 전자계약 앱." />
+  <link rel="stylesheet" href="styles.css" />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>✍️</text></svg>" />
+</head>
+<body>
+  <a class="skip-link" href="#main">본문 바로가기</a>
+
+  <header class="app-header" role="banner">
+    <div class="brand" data-nav="home" role="button" tabindex="0" aria-label="홈으로">
+      <span class="brand-mark" aria-hidden="true">✍️</span>
+      <span class="brand-name">한국전자계약</span>
+      <span class="brand-badge">DEMO</span>
+    </div>
+    <nav class="app-nav" aria-label="주요 메뉴">
+      <button type="button" class="nav-btn" data-nav="home">템플릿</button>
+      <button type="button" class="nav-btn" data-nav="box">내 계약함 <span id="box-count" class="pill">0</span></button>
+      <button type="button" class="nav-btn ghost" id="reset-btn" title="모든 데모 데이터 삭제">초기화</button>
+    </nav>
+  </header>
+
+  <main id="main" class="app" role="main">
+    <!-- Demo-mode notice -->
+    <p class="demo-note" role="note">
+      <strong>데모 모드</strong> — 이 앱은 브라우저 안에서만 동작하며 법적 효력이 있는 전자서명 서비스가 아닙니다.
+      실제 개인정보를 입력하지 마세요. 데이터는 이 브라우저(localStorage)에만 저장됩니다.
+    </p>
+
+    <!-- View: Template gallery -->
+    <section id="view-home" class="view" aria-labelledby="home-title">
+      <h1 id="home-title" class="view-title">계약서 템플릿 갤러리</h1>
+      <p class="view-sub">필요한 계약 유형을 선택하면 작성 마법사가 시작됩니다.</p>
+      <div id="template-gallery" class="gallery" aria-live="polite"></div>
+    </section>
+
+    <!-- View: Wizard -->
+    <section id="view-wizard" class="view hidden" aria-labelledby="wizard-title">
+      <button type="button" class="link-back" data-nav="home">← 템플릿으로</button>
+      <h1 id="wizard-title" class="view-title">계약서 작성 마법사</h1>
+      <div class="wizard-layout">
+        <form id="wizard" class="wizard" novalidate autocomplete="off"></form>
+        <aside id="wizard-checklist" class="checklist card" aria-label="계약 항목 체크리스트"></aside>
+      </div>
+      <div class="wizard-actions">
+        <button type="button" class="btn" data-nav="home">취소</button>
+        <button type="button" class="btn primary" id="to-preview-btn">미리보기 →</button>
+      </div>
+    </section>
+
+    <!-- View: Preview + signing -->
+    <section id="view-preview" class="view hidden" aria-labelledby="preview-title">
+      <button type="button" class="link-back" id="back-to-wizard">← 작성으로</button>
+      <h1 id="preview-title" class="view-title">미리보기 및 서명</h1>
+      <div class="preview-layout">
+        <article id="preview" class="contract-doc card" aria-label="계약서 미리보기"></article>
+        <aside class="sign-panel card">
+          <h2>캔버스 서명</h2>
+          <label class="field-label" for="signer-name">서명자 이름</label>
+          <input id="signer-name" class="input" type="text" placeholder="예: 김미소" autocomplete="off" />
+          <p class="hint">아래 상자에 마우스 또는 손가락으로 서명을 그리세요.</p>
+          <div class="canvas-wrap">
+            <canvas id="signature-canvas" aria-label="서명 캔버스"></canvas>
+          </div>
+          <div class="sign-buttons">
+            <button type="button" class="btn" id="clear-sign-btn">지우기</button>
+            <button type="button" class="btn primary" id="apply-sign-btn">서명 날인</button>
+          </div>
+          <div id="integrity" class="integrity" aria-live="polite"></div>
+        </aside>
+      </div>
+      <div class="wizard-actions">
+        <button type="button" class="btn" id="save-draft-btn">임시 저장</button>
+        <button type="button" class="btn primary" id="finish-btn">계약함에 저장</button>
+      </div>
+    </section>
+
+    <!-- View: My contract box -->
+    <section id="view-box" class="view hidden" aria-labelledby="box-title">
+      <h1 id="box-title" class="view-title">내 계약함</h1>
+      <div class="box-controls">
+        <input id="search-input" class="input" type="search" placeholder="제목·당사자·내용 검색" aria-label="계약 검색" />
+        <select id="status-filter" class="input" aria-label="상태 필터">
+          <option value="all">전체 상태</option>
+          <option value="draft">작성중</option>
+          <option value="awaiting">서명대기</option>
+          <option value="completed">완료</option>
+        </select>
+      </div>
+      <div id="contract-box" class="contract-list" aria-live="polite"></div>
+    </section>
+
+    <!-- View: Contract detail -->
+    <section id="view-detail" class="view hidden" aria-labelledby="detail-title">
+      <button type="button" class="link-back" data-nav="box">← 계약함으로</button>
+      <h1 id="detail-title" class="view-title">계약 상세</h1>
+      <div class="detail-layout">
+        <article id="detail-doc" class="contract-doc card"></article>
+        <aside class="detail-side">
+          <div id="detail-meta" class="card"></div>
+          <div class="card">
+            <h2>감사 로그</h2>
+            <ol id="audit-log" class="audit-log"></ol>
+          </div>
+          <div class="detail-buttons">
+            <button type="button" class="btn" id="print-btn">🖨️ 인쇄 / PDF</button>
+            <button type="button" class="btn" id="share-btn">🔗 공유 링크(모의)</button>
+            <button type="button" class="btn danger" id="delete-btn">삭제</button>
+          </div>
+          <div id="share-out" class="share-out hidden" aria-live="polite"></div>
+        </aside>
+      </div>
+    </section>
+  </main>
+
+  <footer class="app-footer">
+    <p>한국전자계약 (e-Contract) · 데모 · Apache-2.0 · © 2026 CLSOFTLAB (씨엘소프트랩)</p>
+    <p class="footer-note">Not an official Anthropic product.</p>
+  </footer>
+
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+  <script type="module" src="app.js"></script>
+</body>
+</html>

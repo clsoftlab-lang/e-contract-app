@@ -1,0 +1,166 @@
+{
+  "version": "1.0.0",
+  "generatedFor": "demo",
+  "templates": [
+    {
+      "id": "employment",
+      "name": "근로계약서",
+      "icon": "📄",
+      "category": "고용",
+      "summary": "사용자와 근로자 사이의 근무 조건, 임금, 근로시간을 정하는 표준형 근로계약입니다.",
+      "checklist": [
+        "임금 및 지급일이 정확히 기재되었는지 확인",
+        "소정근로시간과 휴게시간이 명시되었는지 확인",
+        "계약 기간과 수습 여부를 상호 확인",
+        "양 당사자 서명 완료 여부 확인"
+      ],
+      "fields": [
+        { "key": "employerName", "label": "사용자(회사)명", "type": "text", "group": "당사자", "required": true, "placeholder": "예: 가나다 주식회사" },
+        { "key": "employerRep", "label": "대표자", "type": "text", "group": "당사자", "required": true, "placeholder": "예: 홍길동" },
+        { "key": "employeeName", "label": "근로자 성명", "type": "text", "group": "당사자", "required": true, "placeholder": "예: 김미소" },
+        { "key": "position", "label": "담당 업무 / 직위", "type": "text", "group": "근무조건", "required": true, "placeholder": "예: 웹 개발 / 사원" },
+        { "key": "workplace", "label": "근무 장소", "type": "text", "group": "근무조건", "required": false, "placeholder": "예: 서울시 본사 사무실" },
+        { "key": "startDate", "label": "계약 시작일", "type": "date", "group": "근무조건", "required": true },
+        { "key": "endDate", "label": "계약 종료일 (무기한 시 공란)", "type": "date", "group": "근무조건", "required": false },
+        { "key": "workHours", "label": "1일 소정근로시간", "type": "text", "group": "근무조건", "required": true, "placeholder": "예: 09:00~18:00 (휴게 1시간)" },
+        { "key": "wage", "label": "임금(월/시급)", "type": "text", "group": "임금", "required": true, "placeholder": "예: 월 2,500,000원" },
+        { "key": "payday", "label": "임금 지급일", "type": "text", "group": "임금", "required": true, "placeholder": "예: 매월 25일" }
+      ],
+      "clauses": [
+        "제1조 (근로계약의 목적) 본 계약은 사용자 {{employerName}}(대표자 {{employerRep}})와 근로자 {{employeeName}} 사이에 근로 조건을 명확히 하여 상호 신뢰와 협력을 바탕으로 성실히 이행함을 목적으로 한다.",
+        "제2조 (담당 업무 및 근무 장소) 근로자는 {{position}} 업무를 수행하며, 근무 장소는 {{workplace}}로 한다. 업무상 필요에 따라 사용자는 근로자와 협의하여 담당 업무 또는 근무 장소를 변경할 수 있다.",
+        "제3조 (계약 기간) 근로계약 기간은 {{startDate}}부터 {{endDate}}까지로 하며, 종료일이 정해지지 않은 경우 기간의 정함이 없는 것으로 본다.",
+        "제4조 (근로시간 및 휴게) 1일 소정근로시간은 {{workHours}}로 하며, 근로시간 도중 휴게시간을 부여한다. 연장·야간·휴일 근로가 발생하는 경우 관련 법령에 따라 가산 수당을 지급한다.",
+        "제5조 (임금) 임금은 {{wage}}으로 하고, 매월 {{payday}}에 근로자가 지정한 계좌로 지급한다. 세금 및 사회보험료 등 법정 공제는 관련 법령에 따른다.",
+        "제6조 (휴일 및 휴가) 사용자는 관련 법령에서 정한 주휴일과 연차 유급휴가를 근로자에게 부여한다.",
+        "제7조 (계약의 해지) 각 당사자는 관련 법령과 취업규칙에서 정한 절차에 따라 본 계약을 해지할 수 있으며, 해지 시 사전 통보 기간을 준수한다.",
+        "제8조 (기타) 본 계약에 정하지 않은 사항은 근로 관계 법령 및 사용자의 취업규칙에 따르며, 양 당사자는 신의성실의 원칙에 따라 계약을 이행한다."
+      ]
+    },
+    {
+      "id": "lease",
+      "name": "부동산 임대차계약서",
+      "icon": "🏠",
+      "category": "부동산",
+      "summary": "임대인과 임차인 사이의 부동산 임대 조건, 보증금, 차임을 정하는 표준형 임대차계약입니다.",
+      "checklist": [
+        "목적물 주소와 면적이 정확한지 확인",
+        "보증금과 월 차임 금액 확인",
+        "임대차 기간과 관리비 부담 주체 확인",
+        "양 당사자 서명 완료 여부 확인"
+      ],
+      "fields": [
+        { "key": "lessorName", "label": "임대인 성명", "type": "text", "group": "당사자", "required": true, "placeholder": "예: 박정원" },
+        { "key": "lesseeName", "label": "임차인 성명", "type": "text", "group": "당사자", "required": true, "placeholder": "예: 최유진" },
+        { "key": "propertyAddr", "label": "부동산 소재지", "type": "text", "group": "목적물", "required": true, "placeholder": "예: 서울시 ○○구 ○○로 12" },
+        { "key": "propertyArea", "label": "면적 / 구조", "type": "text", "group": "목적물", "required": false, "placeholder": "예: 전용 59㎡, 방 3" },
+        { "key": "deposit", "label": "보증금", "type": "text", "group": "금액", "required": true, "placeholder": "예: 100,000,000원" },
+        { "key": "monthlyRent", "label": "월 차임", "type": "text", "group": "금액", "required": false, "placeholder": "예: 800,000원 (없으면 공란)" },
+        { "key": "mgmtFee", "label": "관리비 부담", "type": "text", "group": "금액", "required": false, "placeholder": "예: 임차인 부담, 월 100,000원" },
+        { "key": "leaseStart", "label": "임대차 시작일", "type": "date", "group": "기간", "required": true },
+        { "key": "leaseEnd", "label": "임대차 종료일", "type": "date", "group": "기간", "required": true }
+      ],
+      "clauses": [
+        "제1조 (목적물) 임대인 {{lessorName}}은 {{propertyAddr}} 소재 부동산({{propertyArea}})을 임차인 {{lesseeName}}에게 임대하고, 임차인은 이를 임차한다.",
+        "제2조 (보증금 및 차임) 보증금은 {{deposit}}으로 하고, 월 차임은 {{monthlyRent}}으로 하여 매월 약정한 날에 지급한다. 관리비 부담은 {{mgmtFee}}로 한다.",
+        "제3조 (임대차 기간) 임대차 기간은 {{leaseStart}}부터 {{leaseEnd}}까지로 한다. 기간 만료 후 갱신은 양 당사자의 합의에 따른다.",
+        "제4조 (목적물의 사용) 임차인은 목적물을 주거 또는 약정한 용도로만 사용하며, 임대인의 동의 없이 구조를 변경하거나 제3자에게 전대하지 않는다.",
+        "제5조 (수선 및 관리) 목적물의 통상적 유지·관리는 임차인이 부담하고, 주요 구조부의 수선은 임대인이 부담한다.",
+        "제6조 (계약의 해지) 임차인이 차임을 2회 이상 연체하거나 계약 내용을 위반하는 경우 임대인은 계약을 해지할 수 있다.",
+        "제7조 (원상회복 및 보증금 반환) 계약 종료 시 임차인은 목적물을 원상으로 회복하여 반환하고, 임대인은 미지급 채무를 공제한 후 보증금을 반환한다.",
+        "제8조 (기타) 본 계약에 정하지 않은 사항은 관련 법령과 일반 관례에 따르며, 양 당사자는 신의성실의 원칙에 따라 이행한다."
+      ]
+    },
+    {
+      "id": "loan",
+      "name": "금전 차용증서",
+      "icon": "💰",
+      "category": "금융",
+      "summary": "채권자와 채무자 사이의 대여 금액, 이자, 변제일을 정하는 금전 소비대차 계약입니다.",
+      "checklist": [
+        "대여 원금과 이자율 확인",
+        "변제 기일과 방법 확인",
+        "지연 시 처리 조건 확인",
+        "양 당사자 서명 완료 여부 확인"
+      ],
+      "fields": [
+        { "key": "creditorName", "label": "채권자(빌려주는 사람)", "type": "text", "group": "당사자", "required": true, "placeholder": "예: 정하늘" },
+        { "key": "debtorName", "label": "채무자(빌리는 사람)", "type": "text", "group": "당사자", "required": true, "placeholder": "예: 오세준" },
+        { "key": "principal", "label": "대여 원금", "type": "text", "group": "조건", "required": true, "placeholder": "예: 10,000,000원" },
+        { "key": "interestRate", "label": "이자율 (연)", "type": "text", "group": "조건", "required": false, "placeholder": "예: 연 5% (무이자 시 공란)" },
+        { "key": "loanDate", "label": "대여일", "type": "date", "group": "조건", "required": true },
+        { "key": "repayDate", "label": "변제 기일", "type": "date", "group": "조건", "required": true },
+        { "key": "repayMethod", "label": "변제 방법", "type": "text", "group": "조건", "required": false, "placeholder": "예: 계좌 일시 상환" }
+      ],
+      "clauses": [
+        "제1조 (대여) 채권자 {{creditorName}}은 채무자 {{debtorName}}에게 금 {{principal}}을 {{loanDate}}에 대여하고, 채무자는 이를 차용하였음을 확인한다.",
+        "제2조 (이자) 이자는 {{interestRate}}로 하며, 이자의 지급 방법과 시기는 양 당사자의 합의에 따른다. 이자율은 관련 법령에서 정한 최고한도를 초과하지 않는다.",
+        "제3조 (변제) 채무자는 {{repayDate}}까지 원금과 이자를 {{repayMethod}} 방법으로 채권자에게 변제한다.",
+        "제4조 (기한의 이익 상실) 채무자가 변제를 지체하거나 신용에 중대한 변화가 발생한 경우, 채권자의 청구에 따라 채무자는 즉시 잔여 채무 전액을 변제한다.",
+        "제5조 (지연손해금) 변제 기일을 도과한 경우 채무자는 연체 기간에 대하여 약정한 지연손해금을 추가로 지급한다.",
+        "제6조 (기타) 본 증서에 정하지 않은 사항은 관련 법령에 따르며, 양 당사자는 본 증서의 내용을 성실히 이행할 것을 확인한다."
+      ]
+    },
+    {
+      "id": "service",
+      "name": "용역/프리랜서 계약서",
+      "icon": "🛠️",
+      "category": "용역",
+      "summary": "발주자와 수행자 사이의 용역 범위, 대금, 납품일을 정하는 프리랜서/도급 계약입니다.",
+      "checklist": [
+        "용역 범위와 산출물 정의 확인",
+        "대금과 지급 조건 확인",
+        "납품 기한과 검수 절차 확인",
+        "지식재산권 귀속 확인 후 서명"
+      ],
+      "fields": [
+        { "key": "clientName", "label": "발주자", "type": "text", "group": "당사자", "required": true, "placeholder": "예: 라온 스튜디오" },
+        { "key": "providerName", "label": "수행자(프리랜서)", "type": "text", "group": "당사자", "required": true, "placeholder": "예: 서지안" },
+        { "key": "scope", "label": "용역 범위 / 산출물", "type": "textarea", "group": "내용", "required": true, "placeholder": "예: 브랜드 로고 3종 및 가이드 제작" },
+        { "key": "fee", "label": "용역 대금", "type": "text", "group": "대금", "required": true, "placeholder": "예: 3,000,000원 (VAT 별도)" },
+        { "key": "payTerms", "label": "지급 조건", "type": "text", "group": "대금", "required": false, "placeholder": "예: 착수 50% / 완료 50%" },
+        { "key": "deliveryDate", "label": "납품 기한", "type": "date", "group": "일정", "required": true },
+        { "key": "ipOwner", "label": "지식재산권 귀속", "type": "select", "group": "권리", "required": false, "options": ["발주자 귀속", "수행자 귀속", "공동 보유"] }
+      ],
+      "clauses": [
+        "제1조 (용역의 내용) 발주자 {{clientName}}은 수행자 {{providerName}}에게 다음의 용역을 위탁하고 수행자는 이를 수행한다. 용역 범위: {{scope}}.",
+        "제2조 (용역 대금) 용역 대금은 {{fee}}으로 하며, 지급 조건은 {{payTerms}}로 한다. 대금은 산출물 검수 완료 후 약정한 기일에 지급한다.",
+        "제3조 (납품 및 검수) 수행자는 {{deliveryDate}}까지 산출물을 납품하고, 발주자는 납품일로부터 합리적인 기간 내에 검수하여 그 결과를 통지한다.",
+        "제4조 (지식재산권) 산출물에 관한 지식재산권은 {{ipOwner}}로 하며, 대금 완납을 조건으로 권리가 이전 또는 확정된다.",
+        "제5조 (비밀유지) 양 당사자는 용역 수행 과정에서 알게 된 상대방의 비밀 정보를 계약 목적 외에 사용하거나 제3자에게 누설하지 않는다.",
+        "제6조 (계약의 변경 및 해지) 용역 범위의 변경은 양 당사자의 서면 합의로 하며, 일방의 중대한 계약 위반 시 상대방은 계약을 해지할 수 있다.",
+        "제7조 (기타) 본 계약에 정하지 않은 사항은 관련 법령과 일반 상관례에 따르며, 양 당사자는 신의성실의 원칙에 따라 이행한다."
+      ]
+    },
+    {
+      "id": "nda",
+      "name": "비밀유지계약서(NDA)",
+      "icon": "🔒",
+      "category": "보안",
+      "summary": "정보를 제공하는 자와 제공받는 자 사이의 비밀 정보 보호 범위와 기간을 정하는 계약입니다.",
+      "checklist": [
+        "비밀 정보의 정의 범위 확인",
+        "정보 사용 목적 명확화",
+        "비밀유지 기간 확인",
+        "양 당사자 서명 완료 여부 확인"
+      ],
+      "fields": [
+        { "key": "discloserName", "label": "정보 제공자", "type": "text", "group": "당사자", "required": true, "placeholder": "예: 마루 테크" },
+        { "key": "recipientName", "label": "정보 수령자", "type": "text", "group": "당사자", "required": true, "placeholder": "예: 한별 컨설팅" },
+        { "key": "purpose", "label": "정보 이용 목적", "type": "textarea", "group": "내용", "required": true, "placeholder": "예: 공동 사업 검토를 위한 자료 공유" },
+        { "key": "scope", "label": "비밀 정보의 범위", "type": "textarea", "group": "내용", "required": false, "placeholder": "예: 기술 자료, 사업 계획, 고객 정보 등" },
+        { "key": "termYears", "label": "비밀유지 기간(년)", "type": "number", "group": "기간", "required": true, "placeholder": "예: 3" },
+        { "key": "effectiveDate", "label": "효력 발생일", "type": "date", "group": "기간", "required": true }
+      ],
+      "clauses": [
+        "제1조 (목적) 본 계약은 정보 제공자 {{discloserName}}가 정보 수령자 {{recipientName}}에게 제공하는 비밀 정보를 보호하기 위하여 필요한 사항을 정함을 목적으로 한다.",
+        "제2조 (이용 목적) 정보 수령자는 제공받은 비밀 정보를 다음 목적으로만 사용한다. 이용 목적: {{purpose}}.",
+        "제3조 (비밀 정보의 범위) 비밀 정보는 {{scope}}를 포함하여 서면·구두·전자적 형태로 제공된 일체의 정보를 말한다. 다만 이미 공지되었거나 정당하게 취득한 정보는 제외한다.",
+        "제4조 (비밀유지 의무) 정보 수령자는 비밀 정보를 선량한 관리자의 주의로 관리하고, 제공자의 사전 서면 동의 없이 제3자에게 공개하거나 목적 외로 사용하지 않는다.",
+        "제5조 (유지 기간) 비밀유지 의무는 {{effectiveDate}}부터 {{termYears}}년간 유효하며, 기간 만료 후에도 반환·폐기 의무는 존속한다.",
+        "제6조 (반환 및 폐기) 계약 종료 또는 제공자의 요청이 있는 경우, 정보 수령자는 지체 없이 비밀 정보와 그 사본을 반환하거나 폐기한다.",
+        "제7조 (기타) 본 계약에 정하지 않은 사항은 관련 법령에 따르며, 양 당사자는 본 계약을 성실히 이행할 것을 확인한다."
+      ]
+    }
+  ]
+}
