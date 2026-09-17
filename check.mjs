@@ -114,7 +114,7 @@ ok('canonicalContractText is deterministic + includes fields', (() => {
 console.log('\n[11] AI-KIT: syntax check ai/ and server/ files (node --check)');
 const aiFiles = [
   'ai/config.js', 'ai/ai.js', 'ai/ui.js',
-  'server/index.mjs'
+  'server/index.mjs', 'server/worker.js'
 ];
 for (const rel of aiFiles) {
   try {
@@ -128,11 +128,13 @@ for (const rel of aiFiles) {
 console.log('\n[12] AI-KIT: AI_ENDPOINT defaults to empty (mock mode)');
 ok('AI_ENDPOINT is exactly "" by default', AI_ENDPOINT === '');
 
-console.log('\n[13] AI-KIT: no API key committed anywhere');
-// Built by concatenation so this needle never appears literally in the repo.
-const needle = 'sk' + '-' + 'ant';
+console.log('\n[13] AI-KIT: no REAL API key committed anywhere');
+// Match only a real Anthropic key (20+ chars after the prefix), built by
+// concatenation so this pattern never appears literally in the repo. This lets
+// docs mention "sk-ant…" generically without a false positive.
+const keyRe = new RegExp('sk-' + 'ant-[A-Za-z0-9_-]{20,}');
 const SKIP_DIRS = new Set(['node_modules', '.git', 'dist']);
-const SCAN_EXT = new Set(['.js', '.mjs', '.json', '.md', '.html', '.css', '.yml', '.yaml', '.example', '.txt']);
+const SCAN_EXT = new Set(['.js', '.mjs', '.json', '.md', '.html', '.css', '.yml', '.yaml', '.example', '.txt', '.toml']);
 function scanFiles(dir) {
   const out = [];
   for (const ent of readdirSync(dir, { withFileTypes: true })) {
@@ -149,9 +151,13 @@ const offenders = [];
 for (const file of scanFiles(root)) {
   let content;
   try { content = readFileSync(file, 'utf8'); } catch { continue; }
-  if (content.includes(needle)) offenders.push(file.replace(root, '.'));
+  if (keyRe.test(content)) offenders.push(file.replace(root, '.'));
 }
-ok(`no "${needle}" token present in repo (found in: ${offenders.join(', ') || 'none'})`, offenders.length === 0);
+ok(`no real Anthropic key committed (found in: ${offenders.join(', ') || 'none'})`, offenders.length === 0);
+
+console.log('\n[14] AI-KIT: .gitignore excludes .env (no key/.env committed)');
+const gitignore = readFileSync(join(root, '.gitignore'), 'utf8');
+ok('.gitignore excludes .env', /^\.env\b/m.test(gitignore));
 
 console.log(`\n=== check.mjs result: ${pass} passed, ${fail} failed ===`);
 process.exit(fail === 0 ? 0 : 1);

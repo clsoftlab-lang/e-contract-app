@@ -21,7 +21,8 @@ import { AI_ENDPOINT } from './config.js';
 export const TASKS = Object.freeze({
   EXPLAIN_CLAUSE: 'explain_clause', // plain-language + risk flags for one clause
   DRAFT_CONTRACT: 'draft_contract', // brief -> field values (JSON) to prefill wizard
-  CONTRACT_QA: 'contract_qa'        // Q&A about the current contract
+  CONTRACT_QA: 'contract_qa',       // Q&A about the current contract
+  RISK_SUMMARY: 'risk_summary'      // auto digest: plain-language risk check for the whole draft
 });
 
 const NOT_LEGAL_ADVICE =
@@ -44,28 +45,45 @@ export async function askAI(task, payload, opts = {}) {
 }
 
 // ---------- Remote provider (real AI via your proxy) ----------
+// 무인(autonomous): if the proxy is unreachable, errors, or replies 429
+// {fallback:true} (rate limit / monthly token cap), we transparently fall back
+// to the offline mock so the app NEVER breaks. Streaming via onToken is kept in
+// both paths.
 async function remoteProvider(task, payload, onToken) {
-  const res = await fetch(AI_ENDPOINT, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ task, payload })
-  });
-  if (!res.ok || !res.body) {
-    const detail = res && res.status ? ` (HTTP ${res.status})` : '';
-    throw new Error('AI 서버 응답 오류' + detail);
+  let res;
+  try {
+    res = await fetch(AI_ENDPOINT, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ task, payload })
+    });
+  } catch {
+    // Network error -> offline mock.
+    return mockProvider(task, payload, onToken);
   }
+
+  // 429 {fallback:true} (or any non-OK / bodyless response) -> offline mock.
+  if (res.status === 429 || !res.ok || !res.body) {
+    return mockProvider(task, payload, onToken);
+  }
+
   const reader = res.body.getReader();
   const decoder = new TextDecoder();
   let full = '';
-  // eslint-disable-next-line no-constant-condition
-  while (true) {
-    const { value, done } = await reader.read();
-    if (done) break;
-    const chunk = decoder.decode(value, { stream: true });
-    if (chunk) {
-      full += chunk;
-      if (onToken) onToken(chunk);
+  try {
+    // eslint-disable-next-line no-constant-condition
+    while (true) {
+      const { value, done } = await reader.read();
+      if (done) break;
+      const chunk = decoder.decode(value, { stream: true });
+      if (chunk) {
+        full += chunk;
+        if (onToken) onToken(chunk);
+      }
     }
+  } catch {
+    // Mid-stream failure with nothing yet rendered -> fall back to the mock.
+    if (!full) return mockProvider(task, payload, onToken);
   }
   return full;
 }
@@ -82,6 +100,9 @@ async function mockProvider(task, payload, onToken) {
       break;
     case TASKS.CONTRACT_QA:
       text = mockContractQA(payload);
+      break;
+    case TASKS.RISK_SUMMARY:
+      text = mockRiskSummary(payload);
       break;
     default:
       text = '지원하지 않는 AI 작업입니다: ' + String(task);
@@ -301,6 +322,57 @@ function bestClause(q, clauses) {
     if (score > bestScore) { bestScore = score; best = c; }
   }
   return bestScore > 0 ? best : (clauses[0] || null);
+}
+
+// ---- Autonomous feature: 계약 리스크 점검 요약 ----
+// Runs on-load when a draft is open. Reuses the same RISK_TERMS engine as the
+// per-clause explainer to produce a short, plain-language digest over the WHOLE
+// contract. Deterministic, offline, and explicitly NOT legal advice.
+function mockRiskSummary(payload) {
+  const tmpl = String(payload.templateName || '계약서');
+  const clauses = Array.isArray(payload.clauses) ? payload.clauses : [];
+  if (!clauses.length) {
+    return '요약할 조항이 아직 없습니다. 항목을 채우고 미리보기를 열면 자동으로 점검합니다.';
+  }
+
+  // Aggregate every risk term found across all clauses, remembering where.
+  const hits = new Map(); // term -> { why, where:Set<label> }
+  clauses.forEach((c, i) => {
+    const label = shortClauseLabel(c, i);
+    for (const [term, why] of RISK_TERMS) {
+      if (String(c).includes(term)) {
+        const e = hits.get(term) || { why, where: new Set() };
+        e.where.add(label);
+        hits.set(term, e);
+      }
+    }
+  });
+
+  const lines = [];
+  lines.push(`[자동 요약] ${tmpl} — 조항 ${clauses.length}개를 훑어 주의할 지점을 점검했습니다.`);
+  lines.push('');
+  if (hits.size) {
+    lines.push('⚠ 특히 눈여겨볼 지점:');
+    // Keep it to the top 5 so the digest stays unobtrusive.
+    let n = 0;
+    for (const [term, e] of hits) {
+      if (n++ >= 5) break;
+      const where = Array.from(e.where).slice(0, 3).join(', ');
+      lines.push(`  · "${term}" (${where}): ${e.why}`);
+    }
+    lines.push('');
+    lines.push('금액·기간·의무 주체는 서명 전에 한 번 더 확인하세요.');
+  } else {
+    lines.push('✔ 뚜렷한 고위험 문구는 발견되지 않았습니다. 그래도 금액·기간·의무 주체는 다시 확인하세요.');
+  }
+  lines.push('');
+  lines.push(NOT_LEGAL_ADVICE);
+  return lines.join('\n');
+}
+
+function shortClauseLabel(clause, i) {
+  const m = String(clause).match(/^\s*(제\s*\d+\s*조\s*\([^)]*\))/);
+  return m ? m[1].trim() : `조항 ${i + 1}`;
 }
 
 // ---- small utils ----

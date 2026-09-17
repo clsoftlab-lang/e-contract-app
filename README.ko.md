@@ -44,11 +44,24 @@ Copyright 2026 CLSOFTLAB (씨엘소프트랩), Dr. Lee Il-guk (이일국)
 **연동 방식(보안 설계):**
 - `ai/config.js` — `AI_ENDPOINT` 기본값은 `""` ⇒ 오프라인 **목업**이 동작합니다. GitHub Pages 데모가 이 방식으로 돌아갑니다.
 - `ai/ai.js` — `askAI(task, payload, {onToken})`: 엔드포인트가 비면 로컬 목업, 값이 있으면 프록시에서 스트리밍합니다.
-- **실제 AI 활성화**: `server/`(레퍼런스 프록시)를 `ANTHROPIC_API_KEY`와 함께 배포(모델 `claude-opus-5`, adaptive thinking, 스트리밍)한 뒤 `AI_ENDPOINT`를 그 `/api/ai` 주소로 설정하세요. [`server/README.md`](server/README.md) 참고.
+- **실제 AI 활성화**: `server/`(레퍼런스 프록시)를 `ANTHROPIC_API_KEY`와 함께 배포(비용 우선 기본 모델 `claude-haiku-4-5`, `AI_MODEL`로 변경 가능, 프롬프트 캐싱, 스트리밍)한 뒤 `AI_ENDPOINT`를 그 `/api/ai` 주소로 설정하세요. [`server/README.md`](server/README.md) 참고.
 
 > 🔐 **API 키는 오직 서버에만 두며, 브라우저나 저장소에는 절대 두지 않습니다.**
 > 브라우저는 오직 여러분의 프록시 주소하고만 통신하고, 키는 프록시에만 존재합니다.
 > `check.mjs`가 저장소에 키 토큰이 커밋되지 않았음을 검증합니다.
+
+## ⚙️ 고도화 — 무인·저비용 실 AI 연동
+
+AI 계층은 **실제 Claude**를 쓰면서도 **무인**으로 돌아가고 **비용이 저렴하도록** 튜닝되어 있습니다.
+
+- **비용 우선 모델.** 기본값은 **`claude-haiku-4-5`**(**$1 / $5 per MTok**, 입력/출력)입니다. 품질을 높이려면 `AI_MODEL`을 `claude-sonnet-5` 또는 `claude-opus-5`로 올리세요(비용 증가).
+- **프롬프트 캐싱.** 작업별 고정 시스템 프롬프트를 `cache_control: ephemeral` 블록으로 보내, 반복 호출 시 캐시를 읽어 비용을 낮춥니다.
+- **출력 상한 + 예산.** 작업별 `max_tokens`를 작게(~700), IP당 요청 제한(분당 20회), 월 토큰 예산(`AI_MONTHLY_TOKEN_CAP`, 기본 2,000,000)을 둡니다. 예산 초과 시 `429 {fallback:true}`.
+- **대략적 비용.** Haiku 4.5 + 캐싱 + ~700 토큰 상한이면 요청당 1센트 미만, 대략 **1,000요청당 ~$2–4** 수준입니다(입력 길이에 따라 변동, 캐싱으로 더 내려감).
+- **무료 원-디플로이(Cloudflare Workers).** `server/worker.js` + `server/wrangler.toml`로 동일한 프록시를 Workers 무료 티어에 배포합니다 — **관리할 서버가 없습니다**. 키는 `wrangler secret put ANTHROPIC_API_KEY`로 한 번만 등록합니다.
+- **무인 목업 폴백.** 엔드포인트가 닿지 않거나, 요청 제한·예산 초과이면 `ai/ai.js`가 오프라인 목업으로 자동 전환되어 앱이 **절대 멈추지 않습니다**. 또한 미리보기를 열면 계약서 조항을 근거로 **계약 리스크 점검 요약**(쉬운 말, 법률 자문 아님)이 자동 생성되며, 오프라인 목업으로도 완전히 동작합니다.
+
+> 🔐 **API 키는 오직 서버에만 두며, 브라우저나 저장소에는 절대 두지 않습니다.**
 
 ## 로컬 실행
 빌드도, 의존성도 없습니다. 폴더를 정적으로 서빙하세요.

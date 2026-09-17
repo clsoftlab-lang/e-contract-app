@@ -44,11 +44,40 @@ real Claude the moment an operator deploys the reference proxy.
 **How it plugs in (secure by design):**
 - `ai/config.js` — `AI_ENDPOINT` is `""` by default ⇒ the offline **MockProvider** runs. This is what powers the GitHub Pages demo.
 - `ai/ai.js` — `askAI(task, payload, {onToken})`: empty endpoint ⇒ local mock; otherwise streams from your proxy.
-- Enable **real AI**: deploy `server/` (reference proxy) with your `ANTHROPIC_API_KEY` (model `claude-opus-5`, adaptive thinking, streaming), then set `AI_ENDPOINT` to its `/api/ai` URL. See [`server/README.md`](server/README.md).
+- Enable **real AI**: deploy `server/` (reference proxy) with your `ANTHROPIC_API_KEY` (cost-first default `claude-haiku-4-5`, configurable via `AI_MODEL`, prompt caching, streaming), then set `AI_ENDPOINT` to its `/api/ai` URL. See [`server/README.md`](server/README.md).
 
 > 🔐 **Keys live server-side only — NEVER in the browser or in this repo.** The
 > browser only ever talks to your proxy origin; the proxy is the only place the
 > Anthropic key exists. `check.mjs` asserts no key token is ever committed.
+
+## ⚙️ 고도화 — 무인·저비용 실 AI 연동
+
+The AI layer is tuned to run **unmanned (무인)** and **cheap (저비용)** while
+still using **real Claude**:
+
+- **Cost-first model.** Defaults to **`claude-haiku-4-5`** (**$1 / $5 per MTok**
+  in/out). Raise `AI_MODEL` to `claude-sonnet-5` or `claude-opus-5` when you want
+  higher quality at higher cost.
+- **Prompt caching.** The stable per-task system prompt is sent as a
+  `cache_control: ephemeral` block, so repeated calls read from cache and cost
+  less.
+- **Output caps + budget.** Modest per-task `max_tokens` (~700), a per-IP rate
+  limit (20/min) and a monthly token budget (`AI_MONTHLY_TOKEN_CAP`, default
+  2,000,000). Over budget → `429 {fallback:true}`.
+- **Rough cost.** With Haiku 4.5 + caching + the ~700-token cap, a typical
+  request is well under a cent — on the order of **~$2–4 per 1,000 requests**
+  (varies with input length; caching pushes it lower).
+- **Free one-deploy (Cloudflare Workers).** `server/worker.js` +
+  `server/wrangler.toml` deploy the same proxy to the Workers free tier — **no
+  server to babysit**. Set the key once with
+  `wrangler secret put ANTHROPIC_API_KEY`.
+- **Autonomous mock-fallback.** If the endpoint is unreachable, rate-limited, or
+  over budget, `ai/ai.js` transparently falls back to the offline mock, so the
+  app **never breaks**. And when a draft preview opens, a **계약 리스크 점검 요약**
+  (plain-language, not legal advice) is auto-generated from the contract's own
+  clauses — it works fully offline via the mock.
+
+> 🔐 **API keys are server-side only — never in the browser or repo.**
 
 ## Run locally
 No build step and no dependencies. Serve the folder statically:
@@ -85,7 +114,9 @@ data/templates.json 5 templates with field schemas + Korean clause text
 ai/config.js        AI_ENDPOINT switch ("" ⇒ built-in mock)
 ai/ai.js            askAI() + deterministic offline MockProvider
 ai/ui.js            wires the 3 AI features into the wizard/preview views
-server/index.mjs    REFERENCE proxy (holds ANTHROPIC_API_KEY server-side)
+server/index.mjs    REFERENCE proxy (Node) — cost-first model, caching, budget
+server/worker.js    Cloudflare Workers variant (free tier, 무인) — same rules
+server/wrangler.toml Workers deploy config (key is a secret, never committed)
 check.mjs           JSON/HTML validation + unit tests + AI-KIT checks (CI)
 ```
 

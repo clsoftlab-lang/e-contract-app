@@ -79,6 +79,12 @@ export function mountPreviewAI(container, hooks) {
     <h2 class="ai-h">${AI_BADGE} AI 계약 도우미</h2>
 
     <div class="ai-block">
+      <h3 class="ai-h3">계약 리스크 점검 요약 <span class="ai-auto" title="미리보기를 열면 자동으로 생성됩니다">자동</span></h3>
+      <p class="ai-sub">미리보기를 열면 계약서 조항 전체를 훑어 주의할 지점을 자동으로 요약합니다. (이해를 돕는 일반 정보)</p>
+      <div id="ai-risk-out" class="ai-out" aria-live="polite"></div>
+    </div>
+
+    <div class="ai-block">
       <h3 class="ai-h3">조항 쉬운 설명 + 리스크 플래그</h3>
       <select id="ai-clause-sel" class="input" aria-label="설명할 조항 선택"></select>
       <div class="ai-row">
@@ -99,6 +105,7 @@ export function mountPreviewAI(container, hooks) {
 
     <p class="ai-note">${DISCLAIMER}</p>`;
 
+  const riskOut = container.querySelector('#ai-risk-out');
   const sel = container.querySelector('#ai-clause-sel');
   const explainBtn = container.querySelector('#ai-explain-btn');
   const explainOut = container.querySelector('#ai-explain-out');
@@ -106,6 +113,7 @@ export function mountPreviewAI(container, hooks) {
   const qBtn = container.querySelector('#ai-q-btn');
   const qOut = container.querySelector('#ai-q-out');
 
+  let riskRunning = false;
   function refresh() {
     const c = hooks.getContract && hooks.getContract();
     const clauses = (c && c.clauses) || [];
@@ -114,7 +122,31 @@ export function mountPreviewAI(container, hooks) {
       : '<option value="">(조항이 아직 없습니다)</option>';
     explainOut.textContent = '';
     qOut.textContent = '';
+    autoRiskSummary(c, clauses);
   }
+
+  // AUTONOMOUS: auto-generate the plain-language risk digest whenever a draft
+  // with clauses is opened. Works offline via the mock; failures fall back
+  // silently (the digest is a bonus, never a blocker).
+  async function autoRiskSummary(c, clauses) {
+    if (!riskOut) return;
+    if (!clauses.length) { riskOut.textContent = ''; return; }
+    if (riskRunning) return;
+    riskRunning = true;
+    riskOut.textContent = '리스크 자동 점검 중…';
+    try {
+      let acc = '';
+      await askAI(TASKS.RISK_SUMMARY,
+        { templateName: (c && c.templateName) || '계약서', clauses },
+        { onToken: (t) => { acc += t; riskOut.textContent = acc; } });
+    } catch {
+      // Unobtrusive: if the auto digest fails, just clear it.
+      riskOut.textContent = '';
+    } finally {
+      riskRunning = false;
+    }
+  }
+
   refresh();
 
   explainBtn.addEventListener('click', async () => {

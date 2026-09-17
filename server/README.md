@@ -24,20 +24,38 @@ browser (ai/ai.js)  ──POST {task,payload}──▶  this proxy  ──▶  A
 ## What it does
 
 - Exposes one route: `POST /api/ai` with body `{ "task", "payload" }`.
-- Builds a per-task prompt server-side and calls:
+- Builds a per-task prompt server-side and calls the Messages API with a
+  **cost-first** default model and **prompt caching**:
   ```js
   client.messages.stream({
-    model: "claude-opus-5",
-    max_tokens: 2048,
-    thinking: { type: "adaptive" },
-    system, messages
+    model: MODEL,                 // default 'claude-haiku-4-5'
+    max_tokens: 700,              // modest per-task cap
+    system: [{ type: 'text', text: systemPrompt, cache_control: { type: 'ephemeral' } }],
+    messages
+    // Haiku 4.5: NO thinking / effort (it 400s). Other models add
+    // thinking:{type:'adaptive'} + output_config:{effort:'low'}.
   })
   ```
 - Streams the text back to the browser as it is generated.
-- Tasks: `explain_clause`, `draft_contract`, `contract_qa`.
+- Tasks: `explain_clause`, `draft_contract`, `contract_qa`, `risk_summary`.
 - Reads `ANTHROPIC_API_KEY` from the environment (**never hardcoded**) and
   refuses to start without it.
 - Sends CORS headers for your Pages origin (`ALLOWED_ORIGIN`).
+- **Cost guardrails**: a per-IP rate limit (default 20/min) and a monthly token
+  budget (`AI_MONTHLY_TOKEN_CAP`, default 2,000,000). Over either limit it
+  returns `429 {"fallback":true}` and the browser transparently uses the offline
+  mock — so the app never breaks and spend stays capped.
+
+## Model & cost
+
+Defaults to the cost-first **`claude-haiku-4-5`** ($1 / $5 per MTok in/out).
+Prompt caching makes the repeated system prompt cheap, and the modest
+`max_tokens` keeps each answer small. Raise quality by setting `AI_MODEL`:
+
+```bash
+export AI_MODEL=claude-sonnet-5   # or claude-opus-5 (higher quality, higher cost)
+export AI_EFFORT=low              # only used by non-Haiku models
+```
 
 ## Run it
 
@@ -50,6 +68,22 @@ export ALLOWED_ORIGIN=https://clsoftlab-lang.github.io
 npm start                         # -> listening on :8787
 ```
 
+## Free (무인) deploy — Cloudflare Workers
+
+`worker.js` + `wrangler.toml` are a drop-in Workers variant with the **same
+routing, model, caching and guardrail rules**. The free tier means **no server
+to babysit** — nothing to keep running, patch, or pay for at idle.
+
+```bash
+cd server
+npx wrangler login
+npx wrangler secret put ANTHROPIC_API_KEY   # server-side secret; never committed
+npx wrangler deploy                          # -> https://e-contract-ai.<subdomain>.workers.dev
+```
+
+Edit non-secret settings (origin, model) in `wrangler.toml` `[vars]`. Then point
+the app at `https://…workers.dev/api/ai` (see below).
+
 ## Point the app at it
 
 In `../ai/config.js` set:
@@ -59,6 +93,8 @@ export const AI_ENDPOINT = "https://your-proxy.example.com/api/ai";
 ```
 
 Leave it as `""` to keep using the offline mock (the default demo behavior).
+Whenever the endpoint is unreachable, rate-limited, or over budget, the app
+**auto-falls back to the offline mock**, so it keeps working unmanned.
 
 ## Security notes
 
@@ -66,9 +102,5 @@ Leave it as `""` to keep using the offline mock (the default demo behavior).
   your host's secret manager, not in source control.
 - Deploy behind HTTPS.
 - Restrict `ALLOWED_ORIGIN` to your own front-end origin.
-- Consider adding rate limiting / auth for production traffic.
-
-## Model
-
-Uses `claude-opus-5` with adaptive thinking. To change the model, edit the
-`MODEL` constant in `index.mjs`.
+- A basic per-IP rate limit + monthly token budget are built in; add auth /
+  a stronger limiter for heavy production traffic.

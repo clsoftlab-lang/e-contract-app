@@ -245,6 +245,11 @@ code { font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace; }
 .ai-panel { margin-top: 16px; padding: 16px 18px; }
 .ai-h { font-size: 17px; margin: 0 0 4px; display: flex; align-items: center; gap: 8px; }
 .ai-h3 { font-size: 15px; margin: 0 0 8px; color: var(--text); }
+.ai-auto {
+  font-size: 10px; font-weight: 700; letter-spacing: .5px; vertical-align: middle;
+  background: var(--surface-2); color: var(--text-soft);
+  border: 1px solid var(--border); padding: 1px 6px; border-radius: 999px; margin-left: 6px;
+}
 .ai-sub { color: var(--text-soft); font-size: 13px; margin: 0 0 10px; }
 .ai-badge {
   font-size: 11px; font-weight: 700; letter-spacing: .5px;
