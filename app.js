@@ -13,6 +13,7 @@ import {
   STATUS, STATUS_LABEL, validateAll, renderClauses,
   deriveStatus, appendAudit, filterContracts, expiryStatus, templateFieldCount
 } from './modules/contract.js';
+import { mountWizardAI, mountPreviewAI } from './ai/ui.js';
 
 const $ = (sel, root = document) => root.querySelector(sel);
 const $$ = (sel, root = document) => Array.from(root.querySelectorAll(sel));
@@ -44,7 +45,27 @@ async function init() {
   bindPreview();
   bindBox();
   bindDetail();
+  bindAI();
   showView('home');
+}
+
+// ---------- AI helper wiring ----------
+let previewAI = null;
+function bindAI() {
+  mountWizardAI($('#ai-wizard'), {
+    getTemplate: () => state.currentTemplate,
+    applyValues: (values) => {
+      if (!state.draft || !values) return;
+      Object.entries(values).forEach(([k, v]) => {
+        if (v != null && String(v).trim() !== '') state.draft.values[k] = String(v);
+      });
+      renderWizard(state.currentTemplate); // re-render inputs with the filled values
+    }
+  });
+  previewAI = mountPreviewAI($('#ai-preview'), {
+    getContract: () => state.draft,
+    getTemplate: () => state.currentTemplate
+  });
 }
 
 // ---------- navigation ----------
@@ -214,6 +235,7 @@ async function goPreview() {
   renderPreviewDoc();
   await refreshIntegrity();
   setupPad();
+  if (previewAI) previewAI.refresh(); // repopulate clause list + Q&A context
   showView('preview');
 }
 

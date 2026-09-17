@@ -5,9 +5,11 @@
 // for the pure domain helpers. Run with: node check.mjs
 // Exits non-zero on any failure (used by .github/workflows/ci.yml).
 
-import { readFileSync } from 'node:fs';
+import { readFileSync, readdirSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
-import { dirname, join } from 'node:path';
+import { dirname, join, extname } from 'node:path';
+import { execFileSync } from 'node:child_process';
+import { AI_ENDPOINT } from './ai/config.js';
 import {
   templateFieldCount, validateField, validateAll, renderClause,
   deriveStatus, filterContracts, expiryStatus, appendAudit, STATUS
@@ -108,6 +110,48 @@ ok('canonicalContractText is deterministic + includes fields', (() => {
   const s2 = canonicalContractText(c);
   return s1 === s2 && s1.includes('FIELD:a=1') && s1.includes('CLAUSE:0:c1');
 })());
+
+console.log('\n[11] AI-KIT: syntax check ai/ and server/ files (node --check)');
+const aiFiles = [
+  'ai/config.js', 'ai/ai.js', 'ai/ui.js',
+  'server/index.mjs'
+];
+for (const rel of aiFiles) {
+  try {
+    execFileSync(process.execPath, ['--check', join(root, rel)], { stdio: 'pipe' });
+    ok(`node --check ${rel}`, true);
+  } catch (err) {
+    ok(`node --check ${rel} (${String(err.stderr || err).slice(0, 120)})`, false);
+  }
+}
+
+console.log('\n[12] AI-KIT: AI_ENDPOINT defaults to empty (mock mode)');
+ok('AI_ENDPOINT is exactly "" by default', AI_ENDPOINT === '');
+
+console.log('\n[13] AI-KIT: no API key committed anywhere');
+// Built by concatenation so this needle never appears literally in the repo.
+const needle = 'sk' + '-' + 'ant';
+const SKIP_DIRS = new Set(['node_modules', '.git', 'dist']);
+const SCAN_EXT = new Set(['.js', '.mjs', '.json', '.md', '.html', '.css', '.yml', '.yaml', '.example', '.txt']);
+function scanFiles(dir) {
+  const out = [];
+  for (const ent of readdirSync(dir, { withFileTypes: true })) {
+    if (ent.isDirectory()) {
+      if (SKIP_DIRS.has(ent.name)) continue;
+      out.push(...scanFiles(join(dir, ent.name)));
+    } else if (SCAN_EXT.has(extname(ent.name)) || ent.name === '.env.example') {
+      out.push(join(dir, ent.name));
+    }
+  }
+  return out;
+}
+const offenders = [];
+for (const file of scanFiles(root)) {
+  let content;
+  try { content = readFileSync(file, 'utf8'); } catch { continue; }
+  if (content.includes(needle)) offenders.push(file.replace(root, '.'));
+}
+ok(`no "${needle}" token present in repo (found in: ${offenders.join(', ') || 'none'})`, offenders.length === 0);
 
 console.log(`\n=== check.mjs result: ${pass} passed, ${fail} failed ===`);
 process.exit(fail === 0 ? 0 : 1);

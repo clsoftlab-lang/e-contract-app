@@ -1,0 +1,17 @@
+{
+  "name": "e-contract-ai-proxy",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Reference AI proxy for the e-Contract demo. Holds ANTHROPIC_API_KEY server-side and exposes POST /api/ai. Not run in CI or the demo.",
+  "license": "Apache-2.0",
+  "scripts": {
+    "start": "node index.mjs"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.70.0"
+  }
+}

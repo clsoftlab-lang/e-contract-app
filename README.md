@@ -27,6 +27,29 @@ Crypto API for tamper-evidence. Everything is stored locally in your browser.
 - **Extras** — contract checklist, **expiry alerts** (D-30 / overdue tags), SHA-256 hash shown on cards.
 - Responsive, mobile-first, light + dark (`prefers-color-scheme`), reset button.
 
+## 🤖 AI 기능 (API 연동)
+
+Three AI features are built in. They work **immediately in the live demo via a
+built-in, offline mock provider** (no key, no network, no cost) and switch to
+real Claude the moment an operator deploys the reference proxy.
+
+1. **조항 쉬운 설명 + 리스크 플래그** — explains a contract clause in plain Korean and flags risky/unfair wording (지연손해금, 해지, 연체 …). *(preview view)*
+2. **조건 입력 → 계약 초안 생성** — from a short brief (당사자·금액·기간 등), drafts field values to **prefill the wizard**. *(wizard view)*
+3. **계약 Q&A 챗봇** — answers questions about the current contract using its own fields and clauses. *(preview view)*
+
+> ⚠️ **NOT legal advice.** AI output is general information to aid understanding
+> only, is not legal advice, and can be wrong — have important decisions
+> reviewed by a qualified professional.
+
+**How it plugs in (secure by design):**
+- `ai/config.js` — `AI_ENDPOINT` is `""` by default ⇒ the offline **MockProvider** runs. This is what powers the GitHub Pages demo.
+- `ai/ai.js` — `askAI(task, payload, {onToken})`: empty endpoint ⇒ local mock; otherwise streams from your proxy.
+- Enable **real AI**: deploy `server/` (reference proxy) with your `ANTHROPIC_API_KEY` (model `claude-opus-5`, adaptive thinking, streaming), then set `AI_ENDPOINT` to its `/api/ai` URL. See [`server/README.md`](server/README.md).
+
+> 🔐 **Keys live server-side only — NEVER in the browser or in this repo.** The
+> browser only ever talks to your proxy origin; the proxy is the only place the
+> Anthropic key exists. `check.mjs` asserts no key token is ever committed.
+
 ## Run locally
 No build step and no dependencies. Serve the folder statically:
 
@@ -59,7 +82,11 @@ modules/storage.js  localStorage persistence (try/catch)
 modules/contract.js domain logic: validation, status, audit (pure helpers)
 modules/signature.js canvas signature pad (pointer/touch)
 data/templates.json 5 templates with field schemas + Korean clause text
-check.mjs           JSON/HTML validation + unit tests (CI)
+ai/config.js        AI_ENDPOINT switch ("" ⇒ built-in mock)
+ai/ai.js            askAI() + deterministic offline MockProvider
+ai/ui.js            wires the 3 AI features into the wizard/preview views
+server/index.mjs    REFERENCE proxy (holds ANTHROPIC_API_KEY server-side)
+check.mjs           JSON/HTML validation + unit tests + AI-KIT checks (CI)
 ```
 
 ## Contributors
